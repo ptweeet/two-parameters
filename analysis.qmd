@@ -1,0 +1,40 @@
+---
+title: "Two Parameters"
+author: "Alec Rogers"
+format: html
+---
+
+```{r}
+#| message: false
+
+library(tidyverse)
+library(primer.data)
+library(tidymodels)
+library(broom)
+```
+
+We are helping the USMC order uniforms for next year's class. To do this we will use data from the 2009-2011 NHANES survey conducted by the CDC to estimate average heights of male and female recruits. Our analysis is limited in that the general US population surveyed in NHANES may not represent the incoming recruits at USMC.
+
+```{r}
+set.seed(10)
+
+x <- nhanes |>
+  filter(age >= 18 & age <= 27) |>
+  select(height, sex) |>
+  drop_na() |>
+  slice_sample(n = 50) 
+```
+# Proposing a Model with Justice #
+$$Y = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \cdots + \beta_n X_n + \epsilon$$
+
+# Fitting the Model with Courage #
+Using a data generating mechanism?
+
+```{r}
+|# cache: true
+
+height_fit <- linear_reg() |>
+  fit(height ~ sex, data = x)
+
+```
+$$\widehat{\text{height}}_i = 163.0 + 13.7 \cdot \text{sexMale}_i$$
