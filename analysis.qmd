@@ -11,9 +11,9 @@ library(tidyverse)
 library(primer.data)
 library(tidymodels)
 library(broom)
+library(marginaleffects)
 ```
 
-We are helping the USMC order uniforms for next year's class. To do this we will use data from the 2009-2011 NHANES survey conducted by the CDC to estimate average heights of male and female recruits. Our analysis is limited in that the general US population surveyed in NHANES may not represent the incoming recruits at USMC.
 
 ```{r}
 set.seed(10)
@@ -31,10 +31,76 @@ $$Y = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \cdots + \beta_n X_n + \epsilon$$
 Using a data generating mechanism?
 
 ```{r}
-|# cache: true
+#| cache: true
 
 height_fit <- linear_reg() |>
-  fit(height ~ sex, data = x)
+ fit(height ~ sex, data = x)
 
 ```
 $$\widehat{\text{height}}_i = 163.0 + 13.7 \cdot \text{sexMale}_i$$
+
+
+
+```{r}
+#| message: false
+
+
+library(dplyr)
+library(gt)
+
+tidy(height_fit, conf.int = TRUE) |>
+  mutate(
+    estimate = round(estimate, 2),
+    std.error = round(std.error, 2),
+    statistic = round(statistic, 2),
+    conf.low = round(conf.low, 2),
+    conf.high = round(conf.high, 2),
+    p.value = scales::pvalue(p.value)
+  ) |>
+  rename(
+    Term = term,
+    Estimate = estimate,
+    `Std. Error` = std.error,
+    `t value` = statistic,
+    `p-value` = p.value,
+    `CI Low` = conf.low,
+    `CI High` = conf.high
+  ) |>
+  gt() |>
+  tab_header(
+    title = "Linear Model Results",
+    subtitle = "Height ~ Sex"
+  ) |>
+  cols_align(align = "center") |>
+  cols_width(everything() ~ px(100))
+```
+
+
+```{r}
+library(ggplot2)
+library(dplyr)
+
+plot_predictions(height_fit, condition = "sex", draw = FALSE) |>
+  ggplot(aes(x = sex, y = estimate)) +
+  geom_pointrange(
+    aes(ymin = conf.low, ymax = conf.high),
+    linewidth = 0.8,
+    fatten = 3
+  ) +
+  labs(
+    title = "Predicted Height by Sex",
+    subtitle = "Points show model-predicted mean height; bars show 95% confidence intervals",
+    x = NULL,
+    y = "Predicted height"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", size = 16),
+    plot.subtitle = element_text(size = 11, colour = "gray30"),
+    axis.text.x = element_text(size = 12),
+    axis.title.y = element_text(face = "bold"),
+    panel.grid.minor = element_blank(),
+    panel.grid.major.x = element_blank()
+  )
+```
+We are helping the USMC order uniforms for next year's class. To do this we will use data from the 2009-2011 NHANES survey conducted by the CDC to estimate average heights of male and female recruits. Our analysis is limited in that the general US population surveyed in NHANES may not represent the incoming recruits at USMC. We model height as a linear function of sex. Males and females were found to have an average (95% CI) height of 177 cm (175 - 179) and 163 (161 - 166). There is uncertainty regarding how representative the NHANES 2010 survey data is of the incoming USMC recruits. Recruits are likely larger, and more physically fit than the general population.
